@@ -11,7 +11,7 @@ def main():
     save_GT_dir = '/media/sdc/wlzhang/data/DIV2K800_sub2'
     n_thread = 20
 
-    print('Parent process %s.' % os.getpid())
+    print(f'Parent process {os.getpid()}.')
     start = time.time()
 
     p = Pool(n_thread)
@@ -51,7 +51,7 @@ def worker(GT_paths, save_GT_dir):
         elif n_channels == 3:
             h, w, c = img_GT.shape
         else:
-            raise ValueError('Wrong image shape - {}'.format(n_channels))
+            raise ValueError(f'Wrong image shape - {n_channels}')
 
         h_space = np.arange(0, h - crop_sz + 1, step)
         if h - (h_space[-1] + crop_sz) > thres_sz:
@@ -73,8 +73,14 @@ def worker(GT_paths, save_GT_dir):
                 # var = np.var(crop_img / 255)
                 # if var > 0.008:
                 #     print(index_str, var)
-                cv2.imwrite(os.path.join(save_GT_dir, base_name.replace('.png', \
-                    '_s'+index_str+'.png')), crop_img, [cv2.IMWRITE_PNG_COMPRESSION, 0])
+                cv2.imwrite(
+                    os.path.join(
+                        save_GT_dir,
+                        base_name.replace('.png', f'_s{index_str}.png'),
+                    ),
+                    crop_img,
+                    [cv2.IMWRITE_PNG_COMPRESSION, 0],
+                )
 
 
 if __name__ == '__main__':

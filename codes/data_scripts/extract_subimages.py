@@ -13,32 +13,18 @@ import data.util as data_util  # noqa: E402
 
 def main():
     mode = 'pair'  # single (one input folder) | pair (extract corresponding GT and LR pairs)
-    opt = {}
-    opt['n_thread'] = 20
-    opt['compression_level'] = 3  # 3 is the default value in cv2
+    opt = {'n_thread': 20, 'compression_level': 3}
     # CV_IMWRITE_PNG_COMPRESSION from 0 to 9. A higher value means a smaller size and longer
     # compression time. If read raw images during training, use 0 for faster IO speed.
-    if mode == 'single':
-        opt['input_folder'] = '../../datasets/DIV2K/DIV2K_train_HR'
-        opt['save_folder'] = '../../datasets/DIV2K/DIV2K800_sub'
-        opt['crop_sz'] = 480  # the size of each sub-image
-        opt['step'] = 240  # step of the sliding crop window
-        opt['thres_sz'] = 48  # size threshold
-        extract_signle(opt)
-    elif mode == 'pair':
+    if mode == 'pair':
         GT_folder = '../../datasets/DIV2K/DIV2K_train_HR'
-        LR_folder = '../../datasets/DIV2K/DIV2K_train_LR_bicubic/X4'
-        save_GT_folder = '../../datasets/DIV2K/DIV2K800_sub'
-        save_LR_folder = '../../datasets/DIV2K/DIV2K800_sub_bicLRx4'
-        scale_ratio = 4
-        crop_sz = 480  # the size of each sub-image (GT)
-        step = 240  # step of the sliding crop window (GT)
-        thres_sz = 48  # size threshold
         ########################################################################
         # check that all the GT and LR images have correct scale ratio
         img_GT_list = data_util._get_paths_from_images(GT_folder)
+        LR_folder = '../../datasets/DIV2K/DIV2K_train_LR_bicubic/X4'
         img_LR_list = data_util._get_paths_from_images(LR_folder)
         assert len(img_GT_list) == len(img_LR_list), 'different length of GT_folder and LR_folder.'
+        scale_ratio = 4
         for path_GT, path_LR in zip(img_GT_list, img_LR_list):
             img_GT = Image.open(path_GT)
             img_LR = Image.open(path_LR)
@@ -48,14 +34,18 @@ def main():
                 w_GT, scale_ratio, w_LR, path_GT)
             assert w_GT / w_LR == scale_ratio, 'GT width [{:d}] is not {:d}X as LR weight [{:d}] for {:s}.'.format(  # noqa: E501
                 w_GT, scale_ratio, w_LR, path_GT)
+        crop_sz = 480
         # check crop size, step and threshold size
         assert crop_sz % scale_ratio == 0, 'crop size is not {:d}X multiplication.'.format(
             scale_ratio)
+        step = 240
         assert step % scale_ratio == 0, 'step is not {:d}X multiplication.'.format(scale_ratio)
+        thres_sz = 48
         assert thres_sz % scale_ratio == 0, 'thres_sz is not {:d}X multiplication.'.format(
             scale_ratio)
         print('process GT...')
         opt['input_folder'] = GT_folder
+        save_GT_folder = '../../datasets/DIV2K/DIV2K800_sub'
         opt['save_folder'] = save_GT_folder
         opt['crop_sz'] = crop_sz
         opt['step'] = step
@@ -63,6 +53,7 @@ def main():
         extract_signle(opt)
         print('process LR...')
         opt['input_folder'] = LR_folder
+        save_LR_folder = '../../datasets/DIV2K/DIV2K800_sub_bicLRx4'
         opt['save_folder'] = save_LR_folder
         opt['crop_sz'] = crop_sz // scale_ratio
         opt['step'] = step // scale_ratio
@@ -71,6 +62,13 @@ def main():
         assert len(data_util._get_paths_from_images(save_GT_folder)) == len(
             data_util._get_paths_from_images(
                 save_LR_folder)), 'different length of save_GT_folder and save_LR_folder.'
+    elif mode == 'single':
+        opt['input_folder'] = '../../datasets/DIV2K/DIV2K_train_HR'
+        opt['save_folder'] = '../../datasets/DIV2K/DIV2K800_sub'
+        opt['crop_sz'] = 480  # the size of each sub-image
+        opt['step'] = 240  # step of the sliding crop window
+        opt['thres_sz'] = 48  # size threshold
+        extract_signle(opt)
     else:
         raise ValueError('Wrong mode.')
 
@@ -112,7 +110,7 @@ def worker(path, opt):
     elif n_channels == 3:
         h, w, c = img.shape
     else:
-        raise ValueError('Wrong image shape - {}'.format(n_channels))
+        raise ValueError(f'Wrong image shape - {n_channels}')
 
     h_space = np.arange(0, h - crop_sz + 1, step)
     if h - (h_space[-1] + crop_sz) > thres_sz:

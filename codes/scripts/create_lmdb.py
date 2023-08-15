@@ -18,18 +18,18 @@ data_size = 0
 
 print('Read images...')
 pbar = ProgressBar(len(img_list))
-for i, v in enumerate(img_list):
-    pbar.update('Read {}'.format(v))
+for v in img_list:
+    pbar.update(f'Read {v}')
     img = cv2.imread(v, cv2.IMREAD_UNCHANGED)
     dataset.append(img)
     data_size += img.nbytes
 env = lmdb.open(lmdb_save_path, map_size=data_size * 10)
-print('Finish reading {} images.\nWrite lmdb...'.format(len(img_list)))
+print(f'Finish reading {len(img_list)} images.\nWrite lmdb...')
 
 pbar = ProgressBar(len(img_list))
 with env.begin(write=True) as txn:  # txn is a Transaction object
     for i, v in enumerate(img_list):
-        pbar.update('Write {}'.format(v))
+        pbar.update(f'Write {v}')
         base_name = os.path.splitext(os.path.basename(v))[0]
         key = base_name.encode('ascii')
         data = dataset[i]
@@ -38,7 +38,7 @@ with env.begin(write=True) as txn:  # txn is a Transaction object
             C = 1
         else:
             H, W, C = dataset[i].shape
-        meta_key = (base_name + '.meta').encode('ascii')
+        meta_key = f'{base_name}.meta'.encode('ascii')
         meta = '{:d}, {:d}, {:d}'.format(H, W, C)
         # The encode is only essential in Python 3
         txn.put(key, data)
@@ -49,7 +49,7 @@ print('Finish writing lmdb.')
 keys_cache_file = os.path.join(lmdb_save_path, '_keys_cache.p')
 env = lmdb.open(lmdb_save_path, readonly=True, lock=False, readahead=False, meminit=False)
 with env.begin(write=False) as txn:
-    print('Create lmdb keys cache: {}'.format(keys_cache_file))
+    print(f'Create lmdb keys cache: {keys_cache_file}')
     keys = [key.decode('ascii') for key, _ in txn.cursor()]
     pickle.dump(keys, open(keys_cache_file, "wb"))
 print('Finish creating lmdb keys cache.')

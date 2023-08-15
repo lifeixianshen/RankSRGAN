@@ -20,30 +20,31 @@ def main():
     # vimeo90k: GT | LR | flow
     # REDS: train_sharp, train_sharp_bicubic, train_blur_bicubic, train_blur, train_blur_comp
     #       train_sharp_flowx4
-    if dataset == 'vimeo90k':
-        vimeo90k(mode)
-    elif dataset == 'REDS':
-        REDS(mode)
-    elif dataset == 'general':
-        opt = {}
-        opt['img_folder'] = '../../datasets/DIV2K/DIV2K800_sub'
-        opt['lmdb_save_path'] = '../../datasets/DIV2K/DIV2K800_sub.lmdb'
-        opt['name'] = 'DIV2K800_sub_GT'
-        general_image_folder(opt)
-    elif dataset == 'DIV2K_demo':
-        opt = {}
-        ## GT
-        opt['img_folder'] = '../../datasets/DIV2K/DIV2K800_sub'
-        opt['lmdb_save_path'] = '../../datasets/DIV2K/DIV2K800_sub.lmdb'
-        opt['name'] = 'DIV2K800_sub_GT'
+    if dataset == 'DIV2K_demo':
+        opt = {
+            'img_folder': '../../datasets/DIV2K/DIV2K800_sub',
+            'lmdb_save_path': '../../datasets/DIV2K/DIV2K800_sub.lmdb',
+            'name': 'DIV2K800_sub_GT',
+        }
         general_image_folder(opt)
         ## LR
         opt['img_folder'] = '../../datasets/DIV2K/DIV2K800_sub_bicLRx4'
         opt['lmdb_save_path'] = '../../datasets/DIV2K/DIV2K800_sub_bicLRx4.lmdb'
         opt['name'] = 'DIV2K800_sub_bicLRx4'
         general_image_folder(opt)
+    elif dataset == 'REDS':
+        REDS(mode)
+    elif dataset == 'general':
+        opt = {
+            'img_folder': '../../datasets/DIV2K/DIV2K800_sub',
+            'lmdb_save_path': '../../datasets/DIV2K/DIV2K800_sub.lmdb',
+            'name': 'DIV2K800_sub_GT',
+        }
+        general_image_folder(opt)
     elif dataset == 'test':
         test_lmdb('../../datasets/REDS/train_sharp_wval.lmdb', 'REDS')
+    elif dataset == 'vimeo90k':
+        vimeo90k(mode)
 
 
 def read_image_worker(path, key):
@@ -329,7 +330,7 @@ def REDS(mode):
         split_rlt = img_path.split('/')
         folder = split_rlt[-2]
         img_name = split_rlt[-1].split('.png')[0]
-        keys.append(folder + '_' + img_name)
+        keys.append(f'{folder}_{img_name}')
 
     if read_all_imgs:
         #### read all images to memory (multiprocessing)
@@ -394,11 +395,8 @@ def test_lmdb(dataroot, dataset='REDS'):
     print('Resolution: ', meta_info['resolution'])
     print('# keys: ', len(meta_info['keys']))
     # read one image
-    if dataset == 'vimeo90k':
-        key = '00001_0001_4'
-    else:
-        key = '000_00000000'
-    print('Reading {} for test.'.format(key))
+    key = '00001_0001_4' if dataset == 'vimeo90k' else '000_00000000'
+    print(f'Reading {key} for test.')
     with env.begin(write=False) as txn:
         buf = txn.get(key.encode('ascii'))
     img_flat = np.frombuffer(buf, dtype=np.uint8)

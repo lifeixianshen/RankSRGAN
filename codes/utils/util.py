@@ -59,7 +59,7 @@ def mkdirs(paths):
 
 def mkdir_and_rename(path):
     if os.path.exists(path):
-        new_name = path + '_archived_' + get_timestamp()
+        new_name = f'{path}_archived_{get_timestamp()}'
         print('Path already exists. Rename it to [{:s}]'.format(new_name))
         logger = logging.getLogger('base')
         logger.info('Path already exists. Rename it to [{:s}]'.format(new_name))
@@ -81,7 +81,7 @@ def setup_logger(logger_name, root, phase, level=logging.INFO, screen=False, tof
                                   datefmt='%y-%m-%d %H:%M:%S')
     lg.setLevel(level)
     if tofile:
-        log_file = os.path.join(root, phase + '_{}.log'.format(get_timestamp()))
+        log_file = os.path.join(root, f'{phase}_{get_timestamp()}.log')
         fh = logging.FileHandler(log_file, mode='w')
         fh.setFormatter(formatter)
         lg.addHandler(fh)
@@ -185,7 +185,7 @@ def single_forward(model, inp):
     """
     with torch.no_grad():
         model_output = model(inp)
-        if isinstance(model_output, list) or isinstance(model_output, tuple):
+        if isinstance(model_output, (list, tuple)):
             output = model_output[0]
         else:
             output = model_output
@@ -228,9 +228,7 @@ def calculate_psnr(img1, img2):
     img1 = img1.astype(np.float64)
     img2 = img2.astype(np.float64)
     mse = np.mean((img1 - img2)**2)
-    if mse == 0:
-        return float('inf')
-    return 20 * math.log10(255.0 / math.sqrt(mse))
+    return float('inf') if mse == 0 else 20 * math.log10(255.0 / math.sqrt(mse))
 
 
 def ssim(img1, img2):
@@ -261,15 +259,13 @@ def calculate_ssim(img1, img2):
     the same outputs as MATLAB's
     img1, img2: [0, 255]
     '''
-    if not img1.shape == img2.shape:
+    if img1.shape != img2.shape:
         raise ValueError('Input images must have the same dimensions.')
     if img1.ndim == 2:
         return ssim(img1, img2)
     elif img1.ndim == 3:
         if img1.shape[2] == 3:
-            ssims = []
-            for i in range(3):
-                ssims.append(ssim(img1, img2))
+            ssims = [ssim(img1, img2) for _ in range(3)]
             return np.array(ssims).mean()
         elif img1.shape[2] == 1:
             return ssim(np.squeeze(img1), np.squeeze(img2))
@@ -294,15 +290,17 @@ class ProgressBar(object):
         terminal_width, _ = get_terminal_size()
         max_bar_width = min(int(terminal_width * 0.6), terminal_width - 50)
         if max_bar_width < 10:
-            print('terminal width is too small ({}), please consider widen the terminal for better '
-                  'progressbar visualization'.format(terminal_width))
+            print(
+                f'terminal width is too small ({terminal_width}), please consider widen the terminal for better progressbar visualization'
+            )
             max_bar_width = 10
         return max_bar_width
 
     def start(self):
         if self.task_num > 0:
-            sys.stdout.write('[{}] 0/{}, elapsed: 0s, ETA:\n{}\n'.format(
-                ' ' * self.bar_width, self.task_num, 'Start...'))
+            sys.stdout.write(
+                f"[{' ' * self.bar_width}] 0/{self.task_num}, elapsed: 0s, ETA:\nStart...\n"
+            )
         else:
             sys.stdout.write('completed: 0, elapsed: 0s')
         sys.stdout.flush()

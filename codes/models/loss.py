@@ -11,8 +11,7 @@ class CharbonnierLoss(nn.Module):
 
     def forward(self, x, y):
         diff = x - y
-        loss = torch.sum(torch.sqrt(diff * diff + self.eps))
-        return loss
+        return torch.sum(torch.sqrt(diff * diff + self.eps))
 
 
 # Define GAN loss: [vanilla | lsgan | wgan-gp]
@@ -23,7 +22,7 @@ class GANLoss(nn.Module):
         self.real_label_val = real_label_val
         self.fake_label_val = fake_label_val
 
-        if self.gan_type == 'gan' or self.gan_type == 'ragan':
+        if self.gan_type in ['gan', 'ragan']:
             self.loss = nn.BCEWithLogitsLoss()
         elif self.gan_type == 'lsgan':
             self.loss = nn.MSELoss()
@@ -70,5 +69,4 @@ class GradientPenaltyLoss(nn.Module):
         grad_interp = grad_interp.view(grad_interp.size(0), -1)
         grad_interp_norm = grad_interp.norm(2, dim=1)
 
-        loss = ((grad_interp_norm - 1)**2).mean()
-        return loss
+        return ((grad_interp_norm - 1)**2).mean()

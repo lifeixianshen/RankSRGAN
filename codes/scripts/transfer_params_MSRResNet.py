@@ -20,8 +20,8 @@ for k, v in crt_net.items():
 crt_net['upconv1.weight'][0:256, :, :, :] = pretrained_net['upconv1.weight'] / 2
 crt_net['upconv1.weight'][256:512, :, :, :] = pretrained_net['upconv1.weight'] / 2
 crt_net['upconv1.weight'][512:576, :, :, :] = pretrained_net['upconv1.weight'][0:64, :, :, :] / 2
-crt_net['upconv1.bias'][0:256] = pretrained_net['upconv1.bias'] / 2
+crt_net['upconv1.bias'][:256] = pretrained_net['upconv1.bias'] / 2
 crt_net['upconv1.bias'][256:512] = pretrained_net['upconv1.bias'] / 2
-crt_net['upconv1.bias'][512:576] = pretrained_net['upconv1.bias'][0:64] / 2
+crt_net['upconv1.bias'][512:576] = pretrained_net['upconv1.bias'][:64] / 2
 
 torch.save(crt_net, '../../experiments/pretrained_models/MSRResNetx3_ini.pth')

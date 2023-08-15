@@ -13,10 +13,7 @@ logger = logging.getLogger('base')
 class SRGANModel(BaseModel):
     def __init__(self, opt):
         super(SRGANModel, self).__init__(opt)
-        if opt['dist']:
-            self.rank = torch.distributed.get_rank()
-        else:
-            self.rank = -1  # non dist training
+        self.rank = torch.distributed.get_rank() if opt['dist'] else -1
         train_opt = opt['train']
 
         # define networks and load pretrained models
@@ -100,9 +97,8 @@ class SRGANModel(BaseModel):
             for k, v in self.netG.named_parameters():  # can optimize for a part of the model
                 if v.requires_grad:
                     optim_params.append(v)
-                else:
-                    if self.rank <= 0:
-                        logger.warning('Params [{:s}] will not optimize.'.format(k))
+                elif self.rank <= 0:
+                    logger.warning('Params [{:s}] will not optimize.'.format(k))
             self.optimizer_G = torch.optim.Adam(optim_params, lr=train_opt['lr_G'],
                                                 weight_decay=wd_G,
                                                 betas=(train_opt['beta1_G'], train_opt['beta2_G']))
@@ -237,23 +233,20 @@ class SRGANModel(BaseModel):
     def print_network(self):
         # Generator
         s, n = self.get_network_description(self.netG)
-        if isinstance(self.netG, nn.DataParallel) or isinstance(self.netG, DistributedDataParallel):
-            net_struc_str = '{} - {}'.format(self.netG.__class__.__name__,
-                                             self.netG.module.__class__.__name__)
+        if isinstance(self.netG, (nn.DataParallel, DistributedDataParallel)):
+            net_struc_str = f'{self.netG.__class__.__name__} - {self.netG.module.__class__.__name__}'
         else:
-            net_struc_str = '{}'.format(self.netG.__class__.__name__)
+            net_struc_str = f'{self.netG.__class__.__name__}'
         if self.rank <= 0:
             logger.info('Network G structure: {}, with parameters: {:,d}'.format(net_struc_str, n))
             logger.info(s)
         if self.is_train:
             # Discriminator
             s, n = self.get_network_description(self.netD)
-            if isinstance(self.netD, nn.DataParallel) or isinstance(self.netD,
-                                                                    DistributedDataParallel):
-                net_struc_str = '{} - {}'.format(self.netD.__class__.__name__,
-                                                 self.netD.module.__class__.__name__)
+            if isinstance(self.netD, (nn.DataParallel, DistributedDataParallel)):
+                net_struc_str = f'{self.netD.__class__.__name__} - {self.netD.module.__class__.__name__}'
             else:
-                net_struc_str = '{}'.format(self.netD.__class__.__name__)
+                net_struc_str = f'{self.netD.__class__.__name__}'
             if self.rank <= 0:
                 logger.info('Network D structure: {}, with parameters: {:,d}'.format(
                     net_struc_str, n))
@@ -261,12 +254,12 @@ class SRGANModel(BaseModel):
 
             if self.cri_fea:  # F, Perceptual Network
                 s, n = self.get_network_description(self.netF)
-                if isinstance(self.netF, nn.DataParallel) or isinstance(
-                        self.netF, DistributedDataParallel):
-                    net_struc_str = '{} - {}'.format(self.netF.__class__.__name__,
-                                                     self.netF.module.__class__.__name__)
+                if isinstance(
+                    self.netF, (nn.DataParallel, DistributedDataParallel)
+                ):
+                    net_struc_str = f'{self.netF.__class__.__name__} - {self.netF.module.__class__.__name__}'
                 else:
-                    net_struc_str = '{}'.format(self.netF.__class__.__name__)
+                    net_struc_str = f'{self.netF.__class__.__name__}'
                 if self.rank <= 0:
                     logger.info('Network F structure: {}, with parameters: {:,d}'.format(
                         net_struc_str, n))
@@ -274,10 +267,10 @@ class SRGANModel(BaseModel):
 
             if self.l_R_w:  # R, Ranker Network
                 s, n = self.get_network_description(self.netR)
-                if isinstance(self.netR, nn.DataParallel) or isinstance(
-                        self.netR, DistributedDataParallel):
-                    net_struc_str = '{} - {}'.format(self.netR.__class__.__name__,
-                                                     self.netR.module.__class__.__name__)
+                if isinstance(
+                    self.netR, (nn.DataParallel, DistributedDataParallel)
+                ):
+                    net_struc_str = f'{self.netR.__class__.__name__} - {self.netR.module.__class__.__name__}'
                 else:
                     net_struc_str = '{}'.format(self.netR.__class__.__name__)
                 if self.rank <= 0:

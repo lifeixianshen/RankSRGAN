@@ -23,7 +23,7 @@ def main():
 
     PSNR_all = []
     SSIM_all = []
-    img_list = sorted(glob.glob(folder_GT + '/*'))
+    img_list = sorted(glob.glob(f'{folder_GT}/*'))
 
     if test_Y:
         print('Testing Y channel.')
@@ -50,7 +50,7 @@ def main():
             cropped_GT = im_GT_in[crop_border:-crop_border, crop_border:-crop_border]
             cropped_Gen = im_Gen_in[crop_border:-crop_border, crop_border:-crop_border]
         else:
-            raise ValueError('Wrong image dimension: {}. Should be 2 or 3.'.format(im_GT_in.ndim))
+            raise ValueError(f'Wrong image dimension: {im_GT_in.ndim}. Should be 2 or 3.')
 
         # calculate PSNR and SSIM
         PSNR = calculate_psnr(cropped_GT * 255, cropped_Gen * 255)
@@ -70,9 +70,7 @@ def calculate_psnr(img1, img2):
     img1 = img1.astype(np.float64)
     img2 = img2.astype(np.float64)
     mse = np.mean((img1 - img2)**2)
-    if mse == 0:
-        return float('inf')
-    return 20 * math.log10(255.0 / math.sqrt(mse))
+    return float('inf') if mse == 0 else 20 * math.log10(255.0 / math.sqrt(mse))
 
 
 def ssim(img1, img2):
@@ -103,15 +101,13 @@ def calculate_ssim(img1, img2):
     the same outputs as MATLAB's
     img1, img2: [0, 255]
     '''
-    if not img1.shape == img2.shape:
+    if img1.shape != img2.shape:
         raise ValueError('Input images must have the same dimensions.')
     if img1.ndim == 2:
         return ssim(img1, img2)
     elif img1.ndim == 3:
         if img1.shape[2] == 3:
-            ssims = []
-            for i in range(3):
-                ssims.append(ssim(img1, img2))
+            ssims = [ssim(img1, img2) for _ in range(3)]
             return np.array(ssims).mean()
         elif img1.shape[2] == 1:
             return ssim(np.squeeze(img1), np.squeeze(img2))

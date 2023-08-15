@@ -88,7 +88,7 @@ class mmsrSRResNet(nn.Module):
         if self.upscale == 4:
             out = self.relu(self.pixel_shuffle(self.upconv1(out+fea)))
             out = self.relu(self.pixel_shuffle(self.upconv2(out)))
-        elif self.upscale == 3 or self.upscale == 2:
+        elif self.upscale in [3, 2]:
             out = self.relu(self.pixel_shuffle(self.upconv1(out+fea)))
 
         out = self.conv_last(self.relu(self.HRconv(out)))
@@ -130,11 +130,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu") # PyTorch 
 model2 = net_new.to(device)
 
 print("Model2's state_dict:")
-ordereddict = []
-for param_tensor in model2.state_dict():
-    ordereddict.append(param_tensor)
-    # print(param_tensor, "\t", model2.state_dict()[param_tensor].size())
-
+ordereddict = list(model2.state_dict())
 # print("key state_dict:")
 # print(ordereddict)
 

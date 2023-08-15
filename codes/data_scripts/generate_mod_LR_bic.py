@@ -18,9 +18,9 @@ def generate_mod_LR_bic():
     sourcedir = '/data/datasets/img'
     savedir = '/data/datasets/mod'
 
-    saveHRpath = os.path.join(savedir, 'HR', 'x' + str(mod_scale))
-    saveLRpath = os.path.join(savedir, 'LR', 'x' + str(up_scale))
-    saveBicpath = os.path.join(savedir, 'Bic', 'x' + str(up_scale))
+    saveHRpath = os.path.join(savedir, 'HR', f'x{mod_scale}')
+    saveLRpath = os.path.join(savedir, 'LR', f'x{up_scale}')
+    saveBicpath = os.path.join(savedir, 'Bic', f'x{up_scale}')
 
     if not os.path.isdir(sourcedir):
         print('Error: No source data found')
@@ -38,17 +38,17 @@ def generate_mod_LR_bic():
     if not os.path.isdir(saveHRpath):
         os.mkdir(saveHRpath)
     else:
-        print('It will cover ' + str(saveHRpath))
+        print(f'It will cover {str(saveHRpath)}')
 
     if not os.path.isdir(saveLRpath):
         os.mkdir(saveLRpath)
     else:
-        print('It will cover ' + str(saveLRpath))
+        print(f'It will cover {str(saveLRpath)}')
 
     if not os.path.isdir(saveBicpath):
         os.mkdir(saveBicpath)
     else:
-        print('It will cover ' + str(saveBicpath))
+        print(f'It will cover {str(saveBicpath)}')
 
     filepaths = [f for f in os.listdir(sourcedir) if f.endswith('.png')]
     num_files = len(filepaths)
@@ -56,7 +56,7 @@ def generate_mod_LR_bic():
     # prepare data with augementation
     for i in range(num_files):
         filename = filepaths[i]
-        print('No.{} -- Processing {}'.format(i, filename))
+        print(f'No.{i} -- Processing {filename}')
         # read image
         image = cv2.imread(os.path.join(sourcedir, filename))
 

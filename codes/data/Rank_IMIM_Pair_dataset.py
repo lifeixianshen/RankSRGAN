@@ -39,12 +39,10 @@ class RANK_IMIM_Pair_Dataset(data.Dataset):
 
         # get image label scores
         self.label = {}
-        f = open(self.label_path, 'r')
-        for line in f.readlines():
-            line = line.strip().split()
-            self.label[line[0]] = line[1]
-        f.close()
-
+        with open(self.label_path, 'r') as f:
+            for line in f:
+                line = line.strip().split()
+                self.label[line[0]] = line[1]
         assert self.paths_img1, 'Error: img1 paths are empty.'
 
         # self.random_scale_list = [1, 0.9, 0.8, 0.7, 0.6, 0.5]
