@@ -35,7 +35,7 @@ def main():
     parser.add_argument('--local_rank', type=int, default=0)
     args = parser.parse_args()
     opt = option.parse(args.opt, is_train=True)
-    perceptualmetric_path = os.getcwd() + '/utils/perceptualmetric'
+    perceptualmetric_path = f'{os.getcwd()}/utils/perceptualmetric'
 
     #### distributed training settings
     if args.launcher == 'none':  # disabled distributed training
@@ -63,8 +63,13 @@ def main():
         if resume_state is None:
             util.mkdir_and_rename(
                 opt['path']['experiments_root'])  # rename experiment folder if exists
-            util.mkdirs((path for key, path in opt['path'].items() if not key == 'experiments_root'
-                         and 'pretrain_model' not in key and 'resume' not in key))
+            util.mkdirs(
+                path
+                for key, path in opt['path'].items()
+                if key != 'experiments_root'
+                and 'pretrain_model' not in key
+                and 'resume' not in key
+            )
 
         # config loggers. Before it, the log will not work
         util.setup_logger('base', opt['path']['log'], 'train_' + opt['name'], level=logging.INFO,
@@ -73,12 +78,13 @@ def main():
         logger.info(option.dict2str(opt))
         # tensorboard logger
         if opt['use_tb_logger'] and 'debug' not in opt['name']:
-            version = float(torch.__version__[0:3])
+            version = float(torch.__version__[:3])
             if version >= 1.1:  # PyTorch 1.1
                 from torch.utils.tensorboard import SummaryWriter
             else:
                 logger.info(
-                    'You are using PyTorch {}. Tensorboard will use [tensorboardX]'.format(version))
+                    f'You are using PyTorch {version}. Tensorboard will use [tensorboardX]'
+                )
                 from tensorboardX import SummaryWriter
             tb_logger = SummaryWriter(log_dir='../tb_logger/' + opt['name'])
     else:
@@ -93,7 +99,7 @@ def main():
     if seed is None:
         seed = random.randint(1, 10000)
     if rank <= 0:
-        logger.info('Random seed: {}'.format(seed))
+        logger.info(f'Random seed: {seed}')
     util.set_random_seed(seed)
 
     torch.backends.cudnn.benchmark = True
@@ -133,8 +139,9 @@ def main():
 
     #### resume training
     if resume_state:
-        logger.info('Resuming training from epoch: {}, iter: {}.'.format(
-            resume_state['epoch'], resume_state['iter']))
+        logger.info(
+            f"Resuming training from epoch: {resume_state['epoch']}, iter: {resume_state['iter']}."
+        )
 
         start_epoch = resume_state['epoch']
         current_step = resume_state['iter']
@@ -209,7 +216,7 @@ def main():
                         # calculate PSNR
                         sr_img, gt_img = util.crop_border([sr_img, gt_img], opt['scale'])
                         avg_psnr += util.calculate_psnr(sr_img, gt_img)
-                        pbar.update('Test {}'.format(img_name))
+                        pbar.update(f'Test {img_name}')
                         # calculate NIQE
                         avg_niqe +=  eng.calc_NIQE(save_img_path,4)
 

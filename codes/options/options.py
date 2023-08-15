@@ -12,7 +12,7 @@ def parse(opt_path, is_train=True):
     # export CUDA_VISIBLE_DEVICES
     gpu_list = ','.join(str(x) for x in opt['gpu_ids'])
     os.environ['CUDA_VISIBLE_DEVICES'] = gpu_list
-    print('export CUDA_VISIBLE_DEVICES=' + gpu_list)
+    print(f'export CUDA_VISIBLE_DEVICES={gpu_list}')
 
     opt['is_train'] = is_train
     if opt['distortion'] == 'sr':
@@ -89,9 +89,7 @@ class NoneDict(dict):
 # convert to NoneDict, which return None for missing key.
 def dict_to_nonedict(opt):
     if isinstance(opt, dict):
-        new_opt = dict()
-        for key, sub_opt in opt.items():
-            new_opt[key] = dict_to_nonedict(sub_opt)
+        new_opt = {key: dict_to_nonedict(sub_opt) for key, sub_opt in opt.items()}
         return NoneDict(**new_opt)
     elif isinstance(opt, list):
         return [dict_to_nonedict(sub_opt) for sub_opt in opt]
@@ -107,10 +105,12 @@ def check_resume(opt, resume_iter):
                 'pretrain_model_D', None) is not None:
             logger.warning('pretrain_model path will be ignored when resuming training.')
 
-        opt['path']['pretrain_model_G'] = osp.join(opt['path']['models'],
-                                                   '{}_G.pth'.format(resume_iter))
+        opt['path']['pretrain_model_G'] = osp.join(
+            opt['path']['models'], f'{resume_iter}_G.pth'
+        )
         logger.info('Set [pretrain_model_G] to ' + opt['path']['pretrain_model_G'])
         if 'gan' in opt['model']:
-            opt['path']['pretrain_model_D'] = osp.join(opt['path']['models'],
-                                                       '{}_D.pth'.format(resume_iter))
+            opt['path']['pretrain_model_D'] = osp.join(
+                opt['path']['models'], f'{resume_iter}_D.pth'
+            )
             logger.info('Set [pretrain_model_D] to ' + opt['path']['pretrain_model_D'])

@@ -63,8 +63,13 @@ def main():
         if resume_state is None:
             util.mkdir_and_rename(
                 opt['path']['experiments_root'])  # rename experiment folder if exists
-            util.mkdirs((path for key, path in opt['path'].items() if not key == 'experiments_root'
-                         and 'pretrain_model' not in key and 'resume' not in key))
+            util.mkdirs(
+                path
+                for key, path in opt['path'].items()
+                if key != 'experiments_root'
+                and 'pretrain_model' not in key
+                and 'resume' not in key
+            )
 
         # config loggers. Before it, the log will not work
         util.setup_logger('base', opt['path']['log'], 'train_' + opt['name'], level=logging.INFO,
@@ -73,12 +78,13 @@ def main():
         logger.info(option.dict2str(opt))
         # tensorboard logger
         if opt['use_tb_logger'] and 'debug' not in opt['name']:
-            version = float(torch.__version__[0:3])
+            version = float(torch.__version__[:3])
             if version >= 1.1:  # PyTorch 1.1
                 from torch.utils.tensorboard import SummaryWriter
             else:
                 logger.info(
-                    'You are using PyTorch {}. Tensorboard will use [tensorboardX]'.format(version))
+                    f'You are using PyTorch {version}. Tensorboard will use [tensorboardX]'
+                )
                 from tensorboardX import SummaryWriter
             tb_logger = SummaryWriter(log_dir='../tb_logger/' + opt['name'])
     else:
@@ -93,7 +99,7 @@ def main():
     if seed is None:
         seed = random.randint(1, 10000)
     if rank <= 0:
-        logger.info('Random seed: {}'.format(seed))
+        logger.info(f'Random seed: {seed}')
     util.set_random_seed(seed)
 
     torch.backends.cudnn.benchmark = True
@@ -133,8 +139,9 @@ def main():
 
     #### resume training
     if resume_state:
-        logger.info('Resuming training from epoch: {}, iter: {}.'.format(
-            resume_state['epoch'], resume_state['iter']))
+        logger.info(
+            f"Resuming training from epoch: {resume_state['epoch']}, iter: {resume_state['iter']}."
+        )
 
         start_epoch = resume_state['epoch']
         current_step = resume_state['iter']
@@ -179,23 +186,19 @@ def main():
                 if rank <= 0:  #
                     # does not support multi-GPU validation
                     pbar = util.ProgressBar(len(val_loader))
-                    idx = 0
                     for val_data in val_loader:
-                        idx += 1
                         img_name = os.path.splitext(os.path.basename(val_data['img1_path'][0]))[0]
                         img_dir = os.path.join(opt['path']['val_images'], str(current_step))
                         util.mkdir(img_dir)
-                        f = open(os.path.join(img_dir, 'predict_score.txt'), 'a')
+                        with open(os.path.join(img_dir, 'predict_score.txt'), 'a') as f:
+                            model.feed_data(val_data)
+                            model.test()
 
-                        model.feed_data(val_data)
-                        model.test()
-
-                        visuals = model.get_current_visuals()
-                        predict_score1 = visuals['predict_score1'].numpy()
-                        # Save predict scores
-                        f.write('%s  %f\n' % (img_name + '.png', predict_score1))
-                        f.close()
-                        pbar.update('Test {}'.format(img_name))
+                            visuals = model.get_current_visuals()
+                            predict_score1 = visuals['predict_score1'].numpy()
+                                                    # Save predict scores
+                            f.write('%s  %f\n' % (f'{img_name}.png', predict_score1))
+                        pbar.update(f'Test {img_name}')
 
                     # calculate accuracy
                     aligned_pair_accuracy, accuracy_esrganbig, accuracy_srganbig = rank_pair_test(\

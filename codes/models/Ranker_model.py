@@ -20,10 +20,7 @@ class Ranker_Model(BaseModel):
     def __init__(self, opt):
         super(Ranker_Model, self).__init__(opt)
 
-        if opt['dist']:
-            self.rank = torch.distributed.get_rank()
-        else:
-            self.rank = -1  # non dist training
+        self.rank = torch.distributed.get_rank() if opt['dist'] else -1
         train_opt = opt['train']
 
         # define networks and load pretrained models
@@ -50,20 +47,22 @@ class Ranker_Model(BaseModel):
                 if v.requires_grad:
                     optim_params.append(v)
                 else:
-                    print('WARNING: params [%s] will not optimize.' % k)
+                    print(f'WARNING: params [{k}] will not optimize.')
             self.optimizer_R = torch.optim.Adam(optim_params, lr=train_opt['lr_R'], weight_decay=wd_R)
             print('Weight_decay:%f' % wd_R)
             self.optimizers.append(self.optimizer_R)
 
             # schedulers
             self.schedulers = []
-            if train_opt['lr_scheme'] == 'MultiStepLR':
-                for optimizer in self.optimizers:
-                    self.schedulers.append(lr_scheduler.MultiStepLR(optimizer, \
-                                                                    train_opt['lr_steps'], train_opt['lr_gamma']))
-            else:
+            if train_opt['lr_scheme'] != 'MultiStepLR':
                 raise NotImplementedError('MultiStepLR learning rate scheme is enough.')
 
+            self.schedulers.extend(
+                lr_scheduler.MultiStepLR(
+                    optimizer, train_opt['lr_steps'], train_opt['lr_gamma']
+                )
+                for optimizer in self.optimizers
+            )
             self.log_dict = OrderedDict()
 
         print('---------- Model initialized ------------------')
@@ -125,10 +124,9 @@ class Ranker_Model(BaseModel):
     def print_network(self):
         s, n = self.get_network_description(self.netR)
         if isinstance(self.netR, nn.DataParallel):
-            net_struc_str = '{} - {}'.format(self.netR.__class__.__name__,
-                                             self.netR.module.__class__.__name__)
+            net_struc_str = f'{self.netR.__class__.__name__} - {self.netR.module.__class__.__name__}'
         else:
-            net_struc_str = '{}'.format(self.netR.__class__.__name__)
+            net_struc_str = f'{self.netR.__class__.__name__}'
         logger.info('Network R structure: {}, with parameters: {:,d}'.format(net_struc_str, n))
         logger.info(s)
 

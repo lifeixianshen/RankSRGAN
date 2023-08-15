@@ -52,8 +52,7 @@ def pad(pad_type, padding):
 
 def get_valid_padding(kernel_size, dilation):
     kernel_size = kernel_size + (kernel_size - 1) * (dilation - 1)
-    padding = (kernel_size - 1) // 2
-    return padding
+    return (kernel_size - 1) // 2
 
 
 class ConcatBlock(nn.Module):
@@ -63,13 +62,12 @@ class ConcatBlock(nn.Module):
         self.sub = submodule
 
     def forward(self, x):
-        output = torch.cat((x, self.sub(x)), dim=1)
-        return output
+        return torch.cat((x, self.sub(x)), dim=1)
 
     def __repr__(self):
         tmpstr = 'Identity .. \n|'
         modstr = self.sub.__repr__().replace('\n', '\n|')
-        tmpstr = tmpstr + modstr
+        tmpstr += modstr
         return tmpstr
 
 
@@ -80,13 +78,12 @@ class ShortcutBlock(nn.Module):
         self.sub = submodule
 
     def forward(self, x):
-        output = x + self.sub(x)
-        return output
+        return x + self.sub(x)
 
     def __repr__(self):
         tmpstr = 'Identity + \n|'
         modstr = self.sub.__repr__().replace('\n', '\n|')
-        tmpstr = tmpstr + modstr
+        tmpstr += modstr
         return tmpstr
 
 
@@ -99,8 +96,7 @@ def sequential(*args):
     modules = []
     for module in args:
         if isinstance(module, nn.Sequential):
-            for submodule in module.children():
-                modules.append(submodule)
+            modules.extend(iter(module.children()))
         elif isinstance(module, nn.Module):
             modules.append(module)
     return nn.Sequential(*modules)
@@ -181,23 +177,20 @@ class ResidualDenseBlock_5C(nn.Module):
     '''
 
     def __init__(self, nc, kernel_size=3, gc=32, stride=1, bias=True, pad_type='zero', \
-            norm_type=None, act_type='leakyrelu', mode='CNA'):
+                norm_type=None, act_type='leakyrelu', mode='CNA'):
         super(ResidualDenseBlock_5C, self).__init__()
         # gc: growth channel, i.e. intermediate channels
         self.conv1 = conv_block(nc, gc, kernel_size, stride, bias=bias, pad_type=pad_type, \
-            norm_type=norm_type, act_type=act_type, mode=mode)
+                norm_type=norm_type, act_type=act_type, mode=mode)
         self.conv2 = conv_block(nc+gc, gc, kernel_size, stride, bias=bias, pad_type=pad_type, \
-            norm_type=norm_type, act_type=act_type, mode=mode)
+                norm_type=norm_type, act_type=act_type, mode=mode)
         self.conv3 = conv_block(nc+2*gc, gc, kernel_size, stride, bias=bias, pad_type=pad_type, \
-            norm_type=norm_type, act_type=act_type, mode=mode)
+                norm_type=norm_type, act_type=act_type, mode=mode)
         self.conv4 = conv_block(nc+3*gc, gc, kernel_size, stride, bias=bias, pad_type=pad_type, \
-            norm_type=norm_type, act_type=act_type, mode=mode)
-        if mode == 'CNA':
-            last_act = None
-        else:
-            last_act = act_type
+                norm_type=norm_type, act_type=act_type, mode=mode)
+        last_act = None if mode == 'CNA' else act_type
         self.conv5 = conv_block(nc+4*gc, nc, 3, stride, bias=bias, pad_type=pad_type, \
-            norm_type=norm_type, act_type=last_act, mode=mode)
+                norm_type=norm_type, act_type=last_act, mode=mode)
 
     def forward(self, x):
         x1 = self.conv1(x)

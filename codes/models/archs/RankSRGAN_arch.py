@@ -48,7 +48,7 @@ class SRResNet(nn.Module):
         if self.upscale == 4:
             out = self.relu(self.pixel_shuffle(self.upconv1(out+fea)))
             out = self.relu(self.pixel_shuffle(self.upconv2(out)))
-        elif self.upscale == 3 or self.upscale == 2:
+        elif self.upscale in [3, 2]:
             out = self.relu(self.pixel_shuffle(self.upconv1(out+fea)))
 
         out = self.conv_last(self.relu(self.HRconv(out)))
@@ -110,8 +110,7 @@ class Discriminator_VGG_296(nn.Module):
 
         fea = fea.view(fea.size(0), -1)
         fea = self.lrelu(self.linear1(fea))
-        out = self.linear2(fea)
-        return out
+        return self.linear2(fea)
 
 
 ####################
@@ -174,6 +173,5 @@ class Ranker_VGG12_296(nn.Module):
 
         fea = nn.AvgPool2d(fea.size()[2])(fea)
         fea = fea.view(fea.size(0), -1)
-        out = self.classifier(fea)
-        return out
+        return self.classifier(fea)
 

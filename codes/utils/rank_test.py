@@ -5,21 +5,19 @@ def rank_pair_test(predict_file ,label_file):
     f1 = open(predict_file ,'r')
     f2 = open(label_file ,'r')
 
-    for line in f1.readlines():
+    for line in f1:
         line = line.strip().split()
         img_name = line[0]
         img_score = line[1]
         predict_score[img_name] = float(img_score)
 
-    for line in f2.readlines():
+    for line in f2:
         line = line.strip().split()
         img_name = line[0]
         img_score = line[1]
         label_score[img_name] = float(img_score)
 
-    keys_list = list(predict_score.keys())
-    keys_list.sort()
-
+    keys_list = sorted(predict_score.keys())
     cursor = keys_list[0].split('_')[0]
     class_num = 0
     for key in keys_list:
@@ -59,15 +57,15 @@ def rank_pair_test(predict_file ,label_file):
         predict_rank = 1 if predict_score[keys_list[i]] >= predict_score[keys_list[j]] else -1
 
         count += 1
-        if real_rank == 1:
-            count1 += 1
-            if real_rank == predict_rank:
-                positive1 += 1
         if real_rank == -1:
             count2 += 1
             if real_rank == predict_rank:
                 positive2 += 1
 
+        elif real_rank == 1:
+            count1 += 1
+            if real_rank == predict_rank:
+                positive1 += 1
     # print('%d/%d' % (positive1, count1))
     accuracy_esrganbig1 = positive1 / count1
     # print('accuracy_esrganbig: %f' % accuracy_esrganbig1)
@@ -88,15 +86,15 @@ def rank_pair_test(predict_file ,label_file):
         predict_rank = 1 if predict_score[keys_list[i]] >= predict_score[keys_list[j]] else -1
 
         count += 1
-        if real_rank == 1:
-            count1 += 1
-            if real_rank == predict_rank:
-                positive1 += 1
         if real_rank == -1:
             count2 += 1
             if real_rank == predict_rank:
                 positive2 += 1
 
+        elif real_rank == 1:
+            count1 += 1
+            if real_rank == predict_rank:
+                positive1 += 1
     # print('%d/%d' % (positive1, count1))
     # accuracy_esrganbig = positive1 / count1
     # print('accuracy2: %f' % accuracy_esrganbig)
@@ -118,15 +116,15 @@ def rank_pair_test(predict_file ,label_file):
         predict_rank = 1 if predict_score[keys_list[i]] >= predict_score[keys_list[j]] else -1
 
         count += 1
-        if real_rank == 1:
-            count1 += 1
-            if real_rank == predict_rank:
-                positive1 += 1
         if real_rank == -1:
             count2 += 1
             if real_rank == predict_rank:
                 positive2 += 1
 
+        elif real_rank == 1:
+            count1 += 1
+            if real_rank == predict_rank:
+                positive1 += 1
     # print('%d/%d' % (positive1, count1))
     # accuracy_esrganbig = positive1 / count1
     # print('accuracy3: %f' % accuracy_esrganbig)

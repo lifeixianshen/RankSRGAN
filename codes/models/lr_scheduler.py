@@ -134,7 +134,7 @@ if __name__ == "__main__":
     ax = plt.gca()
     labels = ax.get_xticks().tolist()
     for k, v in enumerate(labels):
-        labels[k] = str(int(v / 1000)) + 'K'
+        labels[k] = f'{int(v / 1000)}K'
     ax.set_xticklabels(labels)
     ax.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.1e'))
 

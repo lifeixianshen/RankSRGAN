@@ -16,10 +16,7 @@ class SRModel(BaseModel):
     def __init__(self, opt):
         super(SRModel, self).__init__(opt)
 
-        if opt['dist']:
-            self.rank = torch.distributed.get_rank()
-        else:
-            self.rank = -1  # non dist training
+        self.rank = torch.distributed.get_rank() if opt['dist'] else -1
         train_opt = opt['train']
 
         # define network and load pretrained models
@@ -53,9 +50,8 @@ class SRModel(BaseModel):
             for k, v in self.netG.named_parameters():  # can optimize for a part of the model
                 if v.requires_grad:
                     optim_params.append(v)
-                else:
-                    if self.rank <= 0:
-                        logger.warning('Params [{:s}] will not optimize.'.format(k))
+                elif self.rank <= 0:
+                    logger.warning('Params [{:s}] will not optimize.'.format(k))
             self.optimizer_G = torch.optim.Adam(optim_params, lr=train_opt['lr_G'],
                                                 weight_decay=wd_G,
                                                 betas=(train_opt['beta1'], train_opt['beta2']))
@@ -151,12 +147,14 @@ class SRModel(BaseModel):
 
     def print_network(self):
         s, n = self.get_network_description(self.netG)
-        if isinstance(self.netG, nn.DataParallel) or isinstance(self.netG, DistributedDataParallel):
-            net_struc_str = '{} - {}'.format(self.netG.__class__.__name__,
-                                             self.netG.module.__class__.__name__)
-        else:
-            net_struc_str = '{}'.format(self.netG.__class__.__name__)
         if self.rank <= 0:
+            net_struc_str = (
+                f'{self.netG.__class__.__name__} - {self.netG.module.__class__.__name__}'
+                if isinstance(
+                    self.netG, (nn.DataParallel, DistributedDataParallel)
+                )
+                else f'{self.netG.__class__.__name__}'
+            )
             logger.info('Network G structure: {}, with parameters: {:,d}'.format(net_struc_str, n))
             logger.info(s)
 

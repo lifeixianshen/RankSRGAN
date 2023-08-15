@@ -43,10 +43,10 @@ class BaseModel():
 
     def _get_init_lr(self):
         """Get the initial lr, which is set by the scheduler"""
-        init_lr_groups_l = []
-        for optimizer in self.optimizers:
-            init_lr_groups_l.append([v['initial_lr'] for v in optimizer.param_groups])
-        return init_lr_groups_l
+        return [
+            [v['initial_lr'] for v in optimizer.param_groups]
+            for optimizer in self.optimizers
+        ]
 
     def update_learning_rate(self, cur_iter, warmup_iter=-1):
         for scheduler in self.schedulers:
@@ -55,10 +55,10 @@ class BaseModel():
         if cur_iter < warmup_iter:
             # get initial lr for each group
             init_lr_g_l = self._get_init_lr()
-            # modify warming-up learning rates
-            warm_up_lr_l = []
-            for init_lr_g in init_lr_g_l:
-                warm_up_lr_l.append([v / warmup_iter * cur_iter for v in init_lr_g])
+            warm_up_lr_l = [
+                [v / warmup_iter * cur_iter for v in init_lr_g]
+                for init_lr_g in init_lr_g_l
+            ]
             # set learning rate
             self._set_lr(warm_up_lr_l)
 
@@ -67,14 +67,14 @@ class BaseModel():
 
     def get_network_description(self, network):
         """Get the string and total parameters of the network"""
-        if isinstance(network, nn.DataParallel) or isinstance(network, DistributedDataParallel):
+        if isinstance(network, (nn.DataParallel, DistributedDataParallel)):
             network = network.module
         return str(network), sum(map(lambda x: x.numel(), network.parameters()))
 
     def save_network(self, network, network_label, iter_label):
-        save_filename = '{}_{}.pth'.format(iter_label, network_label)
+        save_filename = f'{iter_label}_{network_label}.pth'
         save_path = os.path.join(self.opt['path']['models'], save_filename)
-        if isinstance(network, nn.DataParallel) or isinstance(network, DistributedDataParallel):
+        if isinstance(network, (nn.DataParallel, DistributedDataParallel)):
             network = network.module
         state_dict = network.state_dict()
         for key, param in state_dict.items():
@@ -82,7 +82,7 @@ class BaseModel():
         torch.save(state_dict, save_path)
 
     def load_network(self, load_path, network, strict=True):
-        if isinstance(network, nn.DataParallel) or isinstance(network, DistributedDataParallel):
+        if isinstance(network, (nn.DataParallel, DistributedDataParallel)):
             network = network.module
         load_net = torch.load(load_path)
         load_net_clean = OrderedDict()  # remove unnecessary 'module.'
@@ -100,7 +100,7 @@ class BaseModel():
             state['schedulers'].append(s.state_dict())
         for o in self.optimizers:
             state['optimizers'].append(o.state_dict())
-        save_filename = '{}.state'.format(iter_step)
+        save_filename = f'{iter_step}.state'
         save_path = os.path.join(self.opt['path']['training_state'], save_filename)
         torch.save(state, save_path)
 

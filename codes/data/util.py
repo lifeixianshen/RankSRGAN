@@ -68,8 +68,7 @@ def _read_img_lmdb(env, key, size):
         buf = txn.get(key.encode('ascii'))
     img_flat = np.frombuffer(buf, dtype=np.uint8)
     C, H, W = size
-    img = img_flat.reshape(H, W, C)
-    return img
+    return img_flat.reshape(H, W, C)
 
 
 def read_img(env, path, size=None):
@@ -531,12 +530,12 @@ if __name__ == '__main__':
     scale = 1 / 4
     import time
     total_time = 0
-    for i in range(10):
+    for _ in range(10):
         start_time = time.time()
         rlt = imresize(img, scale, antialiasing=True)
         use_time = time.time() - start_time
         total_time += use_time
-    print('average time: {}'.format(total_time / 10))
+    print(f'average time: {total_time / 10}')
 
     import torchvision.utils
     torchvision.utils.save_image((rlt * 255).round() / 255, 'rlt.png', nrow=1, padding=0,

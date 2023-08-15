@@ -26,8 +26,7 @@ class LQGTDataset(data.Dataset):
         if self.paths_LQ and self.paths_GT:
             assert len(self.paths_LQ) == len(
                 self.paths_GT
-            ), 'GT and LQ datasets have different number of images - {}, {}.'.format(
-                len(self.paths_LQ), len(self.paths_GT))
+            ), f'GT and LQ datasets have different number of images - {len(self.paths_LQ)}, {len(self.paths_GT)}.'
         self.random_scale_list = [1]
 
     def _init_lmdb(self):
